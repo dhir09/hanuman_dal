@@ -85,7 +85,7 @@ export default function Events() {
                 </div>
                 <div className="mt-2 flex gap-3 text-[11px] text-stone-500">
                   <span className="text-emerald-600">↑ {formatINR(col)}</span>
-                  {advertising > 0 && <span className="text-teal-600">📢 {formatINR(advertising)}</span>}
+                  {advertising > 0 && <span className="text-indigo-600">📢 {formatINR(advertising)}</span>}
                   <span className="text-red-500">↓ {formatINR(spent)}</span>
                 </div>
               </Link>

@@ -11,12 +11,14 @@ import { shareFile, shareOnWhatsApp } from '../lib/whatsapp'
 import Logo from '../components/Logo'
 
 export default function AdvertisementIncomeReceipt() {
-  const { t, lang } = useI18n()
+  const { t } = useI18n()
   const nav = useNavigate()
   const { id } = useParams()
   const receiptRef = useRef<HTMLDivElement | null>(null)
   const [working, setWorking] = useState<'pdf' | 'share' | null>(null)
-  const receiptLang: Lang = lang
+  // The receipt is an official document: it is ALWAYS rendered in Gujarati,
+  // regardless of the app's current UI language (same as the donation receipt).
+  const receiptLang: Lang = 'gu'
 
   const income = useQuery('advertisementIncomes', () => getAdvertisementIncome(Number(id)), [id])
   const events = useQuery('events', getAllEventsDesc, [])
@@ -46,10 +48,6 @@ export default function AdvertisementIncomeReceipt() {
 
   function money(targetLang = receiptLang) {
     return targetLang === 'gu' ? formatINRGujarati(incomeRecord.amount) : formatINR(incomeRecord.amount)
-  }
-
-  function receiptText(en: string, gu: string, targetLang = receiptLang) {
-    return targetLang === 'gu' ? gu : en
   }
 
   function caption() {
@@ -101,132 +99,57 @@ export default function AdvertisementIncomeReceipt() {
         <h1 className="text-lg font-bold text-stone-800">{t('advertisementReceipt')}</h1>
       </div>
 
-      <div
-        ref={receiptRef}
-        lang={receiptLang}
-        className="overflow-hidden rounded-[28px] bg-[#FFF9F0] shadow-xl ring-1 ring-[#C9973E]/40"
-      >
-        <div
-          className="relative overflow-hidden px-5 py-6 text-white"
-          style={{ backgroundImage: 'linear-gradient(135deg, #3B0707 0%, #681313 52%, #941F16 100%)' }}
-        >
-          <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full border-[18px] border-[#D6A84F]/20" />
-          <div className="absolute -right-4 -top-6 h-28 w-28 rounded-full border-[10px] border-[#F59E0B]/10" />
-          <div className="absolute -bottom-16 -left-14 h-36 w-36 rounded-full border-[15px] border-[#D6A84F]/10" />
-          <div className="absolute right-10 top-3 h-24 w-24 rounded-full bg-[#F6D365]/10 blur-2xl" />
-
-          <div className="relative flex items-center gap-4">
-            <div className="rounded-2xl bg-white p-1.5 shadow-lg ring-2 ring-[#D6A84F]/70">
-              <Logo size={50} className="bg-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xl font-extrabold tracking-wide">{orgName}</div>
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-[#F8D477]">
-                <Megaphone size={13} />
-                {tr('advertisementReceipt')}
+      {/* Minimal receipt — mirrors the donation receipt, indigo theme to differentiate */}
+      <div ref={receiptRef} lang={receiptLang} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200">
+        <div className="bg-gradient-to-r from-indigo-700 to-indigo-600 px-5 py-4 text-white">
+          <div className="flex items-center gap-3">
+            <Logo size={52} className="bg-white ring-2 ring-white/70" />
+            <div className="min-w-0">
+              <div className="truncate text-lg font-bold">{orgName}</div>
+              <div className="mt-0.5 flex items-center gap-1.5 text-xs font-medium opacity-90">
+                <Megaphone size={13} /> {tr('advertisementReceipt')}
               </div>
-            </div>
-          </div>
-
-          <div
-            className="relative mt-5 h-px"
-            style={{ backgroundImage: 'linear-gradient(90deg, transparent 0%, #E6BD5A 50%, transparent 100%)' }}
-          />
-          <div className="relative mt-3 text-center">
-            <div className="text-[9px] font-bold uppercase tracking-[0.35em] text-[#F8D477]">
-              {receiptText('OFFICIAL RECEIPT', 'અધિકૃત રસીદ')}
             </div>
           </div>
         </div>
 
-        <div className="relative p-5">
-          <div className="pointer-events-none absolute right-3 top-16 select-none text-[100px] font-black leading-none text-[#8B1E16]/[0.025]">
-            ૐ
-          </div>
-
-          <div className="relative mb-5 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#A16207]">
-                {receiptText('Advertisement Booking', 'જાહેરાત બુકિંગ')}
-              </div>
-              <div className="mt-1.5 truncate text-base font-bold text-[#3F1D16]">
-                {event ? pickLang(event, 'name') : '—'}
-              </div>
-            </div>
-
-            <div
-              className="shrink-0 rounded-2xl border border-[#D6A84F]/50 px-3 py-2.5 text-right shadow-sm"
-              style={{ backgroundImage: 'linear-gradient(135deg, #FFF9E9 0%, #FBEBC5 100%)' }}
-            >
-              <div className="text-[8px] font-bold uppercase tracking-[0.15em] text-[#A16207]">{tr('receiptNo')}</div>
-              <div className="mt-0.5 font-mono text-[10px] font-extrabold text-[#641313]">{receiptNo}</div>
+        <div className="px-5 py-4">
+          <div className="mb-3 flex items-center justify-between border-b border-dashed border-stone-200 pb-3">
+            <span className="text-sm font-bold uppercase tracking-wide text-indigo-700">{tr('advertisementReceipt')}</span>
+            <div className="text-right">
+              <div className="text-xs text-stone-400">{tr('receiptNo')}</div>
+              <div className="text-sm font-bold text-stone-700">{receiptNo}</div>
             </div>
           </div>
 
-          <div
-            className="relative overflow-hidden rounded-2xl border border-[#E8D7BC] p-4 shadow-sm"
-            style={{ backgroundImage: 'linear-gradient(135deg, #FFFFFF 0%, #FFF3DD 100%)' }}
-          >
-            <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[#D6A84F]/10" />
-            <div className="relative">
-              <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#A16207]">{tr('advertiser')}</div>
-              <div className="mt-1 text-xl font-extrabold text-[#3F1D16]">{pickLang(incomeRecord, 'advertiser')}</div>
-              {pickLang(incomeRecord, 'description') && (
-                <div className="mt-2 text-sm leading-relaxed text-[#806C61]">
-                  {pickLang(incomeRecord, 'description')}
-                </div>
-              )}
+          <Row label={tr('date')} value={formatDate(incomeRecord.date, receiptLang)} />
+          <Row label={tr('advertiser')} value={pickLang(incomeRecord, 'advertiser')} strong />
+          <Row label={tr('event')} value={event ? pickLang(event, 'name') : '—'} />
+          {pickLang(incomeRecord, 'description') && <Row label={tr('description')} value={pickLang(incomeRecord, 'description')} />}
+          <Row label={tr('paymentMode')} value={tr(incomeRecord.paymentMode)} />
+
+          <div className="mt-4 rounded-xl bg-indigo-50 px-4 py-3 ring-1 ring-indigo-100">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-stone-600">{tr('advertisementIncome')}</span>
+              <span className="text-2xl font-bold tabular-nums text-indigo-700">{money()}</span>
             </div>
           </div>
 
-          <div className="my-5 grid grid-cols-2 divide-x divide-[#E8DCCB] rounded-2xl border border-[#E8DCCB] bg-white/70 py-3">
-            <ReceiptDetail label={tr('date')} value={formatDate(incomeRecord.date, receiptLang)} />
-            <ReceiptDetail label={tr('paymentMode')} value={tr(incomeRecord.paymentMode)} align="right" />
-          </div>
-
-          <div
-            className="relative overflow-hidden rounded-[22px] p-5 text-white shadow-lg"
-            style={{ backgroundImage: 'linear-gradient(135deg, #560909 0%, #841B14 52%, #B45309 100%)' }}
-          >
-            <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full border-[15px] border-[#F6D365]/15" />
-            <div className="absolute -bottom-10 right-10 h-24 w-24 rounded-full bg-[#F6D365]/10 blur-xl" />
-            <div className="relative">
-              <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#F8D477]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#F8D477]" />
-                {tr('advertisementIncome')}
-              </div>
-              <div className="mt-1 text-3xl font-black tracking-tight tabular-nums">{money()}</div>
-              <div className="mt-1 text-[9px] font-medium text-white/60">
-                {receiptText('Amount Received', 'પ્રાપ્ત રકમ')}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-7 flex items-end justify-between border-t border-dashed border-[#D9C8AD] pt-4">
-            <div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-[#9A806F]">{tr('advertisementReceipt')}</div>
-              <div className="mt-1 text-xs font-semibold text-[#641313]">{orgName}</div>
-            </div>
+          <div className="mt-8 flex items-end justify-between">
+            <div className="text-[10px] text-stone-400">{tr('advertisementReceipt')} · {orgName}</div>
             <div className="text-center">
-              <img src="/signature.jpg" alt="" className="mx-auto mb-1 h-10 object-contain" />
-              <div className="w-28 border-t border-[#A99580] pt-1 text-[9px] font-medium text-[#806C61]">
-                {tr('authorisedSign')}
-              </div>
+              <img src="/signature.jpg" alt="" className="mx-auto mb-1 h-12 object-contain" />
+              <div className="w-28 border-t border-stone-300 pt-1 text-[10px] text-stone-500">{tr('authorisedSign')}</div>
             </div>
           </div>
-
-          <div
-            className="mt-5 h-1 rounded-full"
-            style={{ backgroundImage: 'linear-gradient(90deg, #641313 0%, #D6A84F 50%, #641313 100%)' }}
-          />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={download} disabled={working !== null} className="btn-primary !bg-[#641313] hover:!bg-[#480909]">
+        <button onClick={download} disabled={working !== null} className="btn-primary !bg-indigo-700 hover:!bg-indigo-800">
           <Download size={18} /> {working === 'pdf' ? '…' : t('downloadPdf')}
         </button>
-        <button onClick={share} disabled={working !== null} className="btn-ghost !bg-[#FFF3DD] !text-[#8B1E16] !ring-[#D6A84F]/50">
+        <button onClick={share} disabled={working !== null} className="btn-ghost !bg-indigo-50 !text-indigo-700 !ring-indigo-200">
           <Share2 size={18} /> {working === 'share' ? '…' : t('shareWhatsapp')}
         </button>
       </div>
@@ -245,11 +168,11 @@ export default function AdvertisementIncomeReceipt() {
   )
 }
 
-function ReceiptDetail({ label, value, align }: { label: string; value: string; align?: 'right' }) {
+function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className={align === 'right' ? 'pl-4 text-right' : 'pr-4'}>
-      <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#9A806F]">{label}</div>
-      <div className="mt-1 text-sm font-bold text-[#3F1D16]">{value}</div>
+    <div className="flex justify-between gap-3 py-1.5 text-sm">
+      <span className="shrink-0 text-stone-400">{label}</span>
+      <span className={`text-right ${strong ? 'font-bold text-stone-800' : 'text-stone-700'}`}>{value}</span>
     </div>
   )
 }

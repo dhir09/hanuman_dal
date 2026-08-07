@@ -62,7 +62,7 @@ export default function EventDetail() {
                 <div className="text-sm font-semibold text-stone-800">{pick(income, 'advertiser')}</div>
                 <div className="text-[11px] text-stone-400">{formatDate(income.date, lang)}</div>
               </div>
-              <div className="text-sm font-bold tabular-nums text-emerald-600">{formatINR(income.amount)}</div>
+              <div className="text-sm font-bold tabular-nums text-indigo-600">{formatINR(income.amount)}</div>
             </div>
           ))}
           {advertisementIncomes?.length === 0 && <div className="text-center text-xs text-stone-400">{t('noData')}</div>}

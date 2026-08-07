@@ -269,6 +269,10 @@ export async function getAllAdvertisementIncomes(): Promise<AdvertisementIncome[
   return unwrap(await supabase.from('advertisement_incomes').select('*'))
 }
 
+export async function getAllAdvertisementIncomesAsc(): Promise<AdvertisementIncome[]> {
+  return unwrap(await supabase.from('advertisement_incomes').select('*').order('date'))
+}
+
 export async function getAllAdvertisementIncomesDesc(): Promise<AdvertisementIncome[]> {
   return unwrap(await supabase.from('advertisement_incomes').select('*').order('date', { ascending: false }))
 }

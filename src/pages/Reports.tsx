@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '../hooks/useQuery'
 import { Download, FileSpreadsheet } from 'lucide-react'
-import { getAllDonationsAsc, getAllEventsDesc, getAllExpensesAsc, getAllPurposes, getSettings, type Settings, type PaymentMode } from '../db/db'
+import { getAllAdvertisementIncomesAsc, getAllDonationsAsc, getAllEventsDesc, getAllExpensesAsc, getAllPurposes, getSettings, type EventItem, type Settings, type PaymentMode } from '../db/db'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatINRGujarati, formatDate, todayISO, toGujaratiDigits } from '../lib/format'
 import { strings, type Lang, type StringKey } from '../i18n/strings'
 import { renderPagesToPdf } from '../lib/pdf'
 import { exportRowsToExcel } from '../lib/excel'
 
-type DataType = 'donations' | 'expenses'
+type DataType = 'donations' | 'expenses' | 'advertisementIncomes'
 type Row = Record<string, unknown> & { id?: number; date: string; amount: number; paymentMode: string }
 const PAYMENT_MODES: PaymentMode[] = ['cash', 'upi', 'bank', 'cheque']
 
@@ -46,6 +46,7 @@ export default function Reports() {
   const events = useQuery('events', getAllEventsDesc, [])
   const donations = useQuery('donations', getAllDonationsAsc, [])
   const expenses = useQuery('expenses', getAllExpensesAsc, [])
+  const advertisementIncomes = useQuery('advertisementIncomes', getAllAdvertisementIncomesAsc, [])
   const settings = useQuery('settings', getSettings, [])
 
   const rt = (key: StringKey) => tr(reportLang, key)
@@ -66,11 +67,19 @@ export default function Reports() {
   const anyFilter = Boolean(fromDate || toDate || purposeIds.length || modes.length || eventId !== '')
 
   const rows = useMemo<Row[]>(() => {
-    const src = (dataType === 'donations' ? donations ?? [] : expenses ?? []) as unknown as Row[]
+    const src = (
+      dataType === 'donations'
+        ? donations ?? []
+        : dataType === 'expenses'
+          ? expenses ?? []
+          : advertisementIncomes ?? []
+    ) as unknown as Row[]
+    // Advertising income only supports date + event filters.
+    const isAd = dataType === 'advertisementIncomes'
     return src.filter((r) => {
       if (fromDate && r.date < fromDate) return false
       if (toDate && r.date > toDate) return false
-      if (modes.length && !modes.includes(r.paymentMode as PaymentMode)) return false
+      if (!isAd && modes.length && !modes.includes(r.paymentMode as PaymentMode)) return false
       if (eventId !== '' && (r as { eventId?: number }).eventId !== eventId) return false
       if (dataType === 'donations' && purposeIds.length) {
         const pid = (r as { purposeId?: number }).purposeId
@@ -78,7 +87,7 @@ export default function Reports() {
       }
       return true
     })
-  }, [dataType, donations, expenses, fromDate, toDate, modes, purposeIds, eventId])
+  }, [dataType, donations, expenses, advertisementIncomes, fromDate, toDate, modes, purposeIds, eventId])
 
   const total = rows.reduce((s, r) => s + r.amount, 0)
 
@@ -116,25 +125,41 @@ export default function Reports() {
   }
 
   function exportExcel() {
-    const data = rows.map((r) =>
-      dataType === 'donations'
-        ? {
-            [rt('receiptNo')]: (r as { receiptNo?: string }).receiptNo ?? '',
-            [rt('date')]: r.date,
-            [rt('donorName')]: pk(reportLang, r, 'donorName'),
-            [rt('purpose')]: pk(reportLang, r, 'purpose'),
-            [rt('paymentMode')]: strings[r.paymentMode as 'cash'][reportLang],
-            [rt('amount')]: r.amount,
-          }
-        : {
-            [rt('date')]: r.date,
-            [rt('description')]: pk(reportLang, r, 'description'),
-            [rt('paidTo')]: pk(reportLang, r, 'paidTo'),
-            [rt('paymentMode')]: strings[r.paymentMode as 'cash'][reportLang],
-            [rt('amount')]: r.amount,
-          },
-    )
+    const data = rows.map((r) => {
+      if (dataType === 'donations') {
+        return {
+          [rt('receiptNo')]: (r as { receiptNo?: string }).receiptNo ?? '',
+          [rt('date')]: r.date,
+          [rt('donorName')]: pk(reportLang, r, 'donorName'),
+          [rt('purpose')]: pk(reportLang, r, 'purpose'),
+          [rt('paymentMode')]: strings[r.paymentMode as 'cash'][reportLang],
+          [rt('amount')]: r.amount,
+        }
+      }
+      if (dataType === 'advertisementIncomes') {
+        return {
+          [rt('receiptNo')]: (r as { receiptNo?: string }).receiptNo ?? '',
+          [rt('date')]: r.date,
+          [rt('advertiser')]: pk(reportLang, r, 'advertiser'),
+          [rt('event')]: eventNameFor((r as { eventId?: number }).eventId),
+          [rt('paymentMode')]: strings[r.paymentMode as 'cash'][reportLang],
+          [rt('amount')]: r.amount,
+        }
+      }
+      return {
+        [rt('date')]: r.date,
+        [rt('description')]: pk(reportLang, r, 'description'),
+        [rt('paidTo')]: pk(reportLang, r, 'paidTo'),
+        [rt('paymentMode')]: strings[r.paymentMode as 'cash'][reportLang],
+        [rt('amount')]: r.amount,
+      }
+    })
     exportRowsToExcel(data, `${orgName}-report-${langTag}.xlsx`, dataType)
+  }
+
+  function eventNameFor(id?: number): string {
+    const ev = events?.find((e) => e.id === id)
+    return ev ? pk(reportLang, ev, 'name') : ''
   }
 
   const pageCount = printPages?.length ?? 1
@@ -145,16 +170,16 @@ export default function Reports() {
 
       <div className="card space-y-3">
         {/* Data type */}
-        <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-stone-100 p-1">
-          {(['donations', 'expenses'] as DataType[]).map((d) => (
+        <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-stone-100 p-1">
+          {(['donations', 'expenses', 'advertisementIncomes'] as DataType[]).map((d) => (
             <button
               key={d}
               onClick={() => setDataType(d)}
-              className={`rounded-lg py-2 text-sm font-semibold transition ${
+              className={`rounded-lg py-2 text-xs font-semibold transition ${
                 dataType === d ? 'bg-white text-saffron-700 shadow-sm' : 'text-stone-500'
               }`}
             >
-              {d === 'donations' ? t('nav_donations') : t('nav_expenses')}
+              {d === 'donations' ? t('nav_donations') : d === 'expenses' ? t('nav_expenses') : t('nav_advertisementIncome')}
             </button>
           ))}
         </div>
@@ -181,21 +206,23 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Payment mode (multi-select) */}
-        <div>
-          <label className="label">{t('paymentMode')}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {PAYMENT_MODES.map((m) => (
-              <button
-                key={m}
-                onClick={() => toggleMode(m)}
-                className={`chip ${modes.includes(m) ? 'bg-saffron-600 text-white' : 'bg-stone-100 text-stone-600'}`}
-              >
-                {t(m)}
-              </button>
-            ))}
+        {/* Payment mode (multi-select) — not applicable to advertising income */}
+        {dataType !== 'advertisementIncomes' && (
+          <div>
+            <label className="label">{t('paymentMode')}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {PAYMENT_MODES.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => toggleMode(m)}
+                  className={`chip ${modes.includes(m) ? 'bg-saffron-600 text-white' : 'bg-stone-100 text-stone-600'}`}
+                >
+                  {t(m)}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Purpose (multi-select, donations only) */}
         {dataType === 'donations' && purposes && purposes.length > 0 && (
@@ -275,6 +302,7 @@ export default function Reports() {
           reportLang={reportLang}
           orgName={orgName}
           settings={settings}
+          events={events}
           grandTotal={total}
           grandCount={rows.length}
         />
@@ -295,6 +323,7 @@ export default function Reports() {
                 reportLang={reportLang}
                 orgName={orgName}
                 settings={settings}
+                events={events}
                 grandTotal={total}
                 grandCount={rows.length}
               />
@@ -314,6 +343,7 @@ interface ReportDocProps {
   reportLang: Lang
   orgName: string
   settings?: Settings
+  events?: EventItem[]
   grandTotal: number
   grandCount: number
   pageNo?: number
@@ -329,6 +359,7 @@ function ReportDoc({
   reportLang,
   orgName,
   settings,
+  events,
   grandTotal,
   grandCount,
   pageNo,
@@ -338,6 +369,17 @@ function ReportDoc({
   const rpick = (obj: object, base: string) => pk(reportLang, obj, base)
   const money = (n: number) => mn(reportLang, n)
   const addr = settings?.address_gu?.trim() || settings?.address_en || ''
+
+  const isAd = dataType === 'advertisementIncomes'
+  const typeLabel = dataType === 'donations' ? rt('nav_donations') : dataType === 'expenses' ? rt('nav_expenses') : rt('nav_advertisementIncome')
+  const col3Head = dataType === 'donations' ? rt('donorName') : isAd ? rt('advertiser') : rt('description')
+  const col4Head = dataType === 'donations' ? rt('purpose') : isAd ? rt('event') : rt('paidTo')
+  const eventName = (id?: number) => {
+    const ev = events?.find((e) => e.id === id)
+    return ev ? rpick(ev, 'name') : ''
+  }
+  const col3 = (r: Row) => (dataType === 'donations' ? rpick(r, 'donorName') : isAd ? rpick(r, 'advertiser') : rpick(r, 'description') || rpick(r, 'category'))
+  const col4 = (r: Row) => (dataType === 'donations' ? rpick(r, 'purpose') : isAd ? eventName((r as { eventId?: number }).eventId) : rpick(r, 'paidTo'))
 
   return (
     <div lang={reportLang} className="w-[720px] bg-white text-stone-800">
@@ -362,7 +404,7 @@ function ReportDoc({
               <div className="text-[9px] uppercase tracking-widest opacity-80">
                 {reportLang === 'gu' ? 'નાણાકીય રિપોર્ટ' : 'Financial Report'}
               </div>
-              <div className="text-sm font-bold">{dataType === 'donations' ? rt('nav_donations') : rt('nav_expenses')}</div>
+              <div className="text-sm font-bold">{typeLabel}</div>
             </div>
             {/* Compact KPI chips */}
             <div className="flex gap-2">
@@ -372,7 +414,7 @@ function ReportDoc({
               </div>
               <div className="rounded-lg px-3 py-1.5 text-right" style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.32)' }}>
                 <div className="text-[9px] font-semibold uppercase tracking-wide opacity-85">
-                  {dataType === 'donations' ? rt('nav_donations') : rt('nav_expenses')}
+                  {typeLabel}
                 </div>
                 <div className="text-base font-extrabold tabular-nums">{guNum(reportLang, grandCount)}</div>
               </div>
@@ -387,8 +429,8 @@ function ReportDoc({
             <tr className="bg-amber-500 text-[11px] uppercase tracking-wide text-white">
               <th className="px-3 py-2.5 font-semibold">#</th>
               <th className="px-3 py-2.5 font-semibold">{rt('date')}</th>
-              <th className="px-3 py-2.5 font-semibold">{dataType === 'donations' ? rt('donorName') : rt('description')}</th>
-              <th className="px-3 py-2.5 font-semibold">{dataType === 'donations' ? rt('purpose') : rt('paidTo')}</th>
+              <th className="px-3 py-2.5 font-semibold">{col3Head}</th>
+              <th className="px-3 py-2.5 font-semibold">{col4Head}</th>
               <th className="px-3 py-2.5 font-semibold">{rt('paymentMode')}</th>
               <th className="px-3 py-2.5 text-right font-semibold">{rt('amount')}</th>
             </tr>
@@ -398,10 +440,8 @@ function ReportDoc({
               <tr key={r.id ?? i} className={i % 2 ? 'bg-amber-50' : 'bg-saffron-50'}>
                 <td className="px-3 py-2 font-semibold text-amber-700">{guNum(reportLang, startIndex + i + 1)}</td>
                 <td className="whitespace-nowrap px-3 py-2 text-stone-500">{formatDate(r.date, 'en')}</td>
-                <td className="px-3 py-2 font-semibold text-stone-800">
-                  {dataType === 'donations' ? rpick(r, 'donorName') : rpick(r, 'description') || rpick(r, 'category')}
-                </td>
-                <td className="px-3 py-2 text-stone-600">{dataType === 'donations' ? rpick(r, 'purpose') : rpick(r, 'paidTo')}</td>
+                <td className="px-3 py-2 font-semibold text-stone-800">{col3(r)}</td>
+                <td className="px-3 py-2 text-stone-600">{col4(r)}</td>
                 <td className="px-3 py-2">
                   <span className="chip bg-amber-100 text-amber-700">{strings[r.paymentMode as 'cash'][reportLang]}</span>
                 </td>
