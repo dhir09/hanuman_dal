@@ -76,6 +76,20 @@ export interface Expense {
   createdAt: string
 }
 
+export interface AdvertisementIncome {
+  id?: number
+  receiptNo: string
+  date: string
+  eventId?: number
+  advertiser_en: string
+  advertiser_gu: string
+  description_en: string
+  description_gu: string
+  amount: number
+  paymentMode: PaymentMode
+  createdAt: string
+}
+
 // ── Helpers ────────────────────────────────────────────────────
 
 function unwrap<T>(result: { data: T | null; error: unknown }): NonNullable<T> {
@@ -249,6 +263,41 @@ export async function deleteExpense(id: number): Promise<void> {
   invalidate('expenses')
 }
 
+// ── Advertisement income ───────────────────────────────────────────────────
+
+export async function getAllAdvertisementIncomes(): Promise<AdvertisementIncome[]> {
+  return unwrap(await supabase.from('advertisement_incomes').select('*'))
+}
+
+export async function getAllAdvertisementIncomesDesc(): Promise<AdvertisementIncome[]> {
+  return unwrap(await supabase.from('advertisement_incomes').select('*').order('date', { ascending: false }))
+}
+
+export async function getAdvertisementIncomesByEvent(eventId: number): Promise<AdvertisementIncome[]> {
+  return unwrap(await supabase.from('advertisement_incomes').select('*').eq('eventId', eventId))
+}
+
+export async function getAdvertisementIncome(id: number): Promise<AdvertisementIncome | undefined> {
+  const { data } = await supabase.from('advertisement_incomes').select('*').eq('id', id).maybeSingle()
+  return data ?? undefined
+}
+
+export async function addAdvertisementIncome(income: Omit<AdvertisementIncome, 'id'>): Promise<number> {
+  const row = unwrap<{ id: number }>(await supabase.from('advertisement_incomes').insert(income).select('id').single())
+  invalidate('advertisementIncomes')
+  return row.id
+}
+
+export async function updateAdvertisementIncome(id: number, income: Partial<AdvertisementIncome>): Promise<void> {
+  await supabase.from('advertisement_incomes').update(income).eq('id', id)
+  invalidate('advertisementIncomes')
+}
+
+export async function deleteAdvertisementIncome(id: number): Promise<void> {
+  await supabase.from('advertisement_incomes').delete().eq('id', id)
+  invalidate('advertisementIncomes')
+}
+
 // ── Seed & Receipt ────────────────────────────────────────────
 
 const DEFAULT_PURPOSES: Array<[string, string]> = [
@@ -292,4 +341,17 @@ export async function nextReceiptNo(dateISO: string): Promise<string> {
     .lte('date', `${year}-12-31`)
   const seq = String((count ?? 0) + 1).padStart(4, '0')
   return `${prefix}-${year}-${seq}`
+}
+
+export async function nextAdvertisementReceiptNo(dateISO: string): Promise<string> {
+  const s = await getSettings()
+  const prefix = s?.receiptPrefix || 'HD'
+  const year = dateISO.slice(0, 4)
+  const { count } = await supabase
+    .from('advertisement_incomes')
+    .select('*', { count: 'exact', head: true })
+    .gte('date', `${year}-01-01`)
+    .lte('date', `${year}-12-31`)
+  const seq = String((count ?? 0) + 1).padStart(4, '0')
+  return `${prefix}-AD-${year}-${seq}`
 }

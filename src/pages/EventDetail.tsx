@@ -1,7 +1,7 @@
 import { useQuery } from '../hooks/useQuery'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
-import { deleteEvent, getDonationsByEvent, getEvent, getExpensesByEvent } from '../db/db'
+import { deleteEvent, getAdvertisementIncomesByEvent, getDonationsByEvent, getEvent, getExpensesByEvent } from '../db/db'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatDate } from '../lib/format'
 import StatCard from '../components/StatCard'
@@ -15,12 +15,14 @@ export default function EventDetail() {
   const event = useQuery('events', () => getEvent(eid), [id])
   const donations = useQuery('donations', () => getDonationsByEvent(eid), [id])
   const expenses = useQuery('expenses', () => getExpensesByEvent(eid), [id])
+  const advertisementIncomes = useQuery('advertisementIncomes', () => getAdvertisementIncomesByEvent(eid), [id])
 
   if (!event) return <div className="py-10 text-center text-stone-400">…</div>
 
   const col = (donations ?? []).reduce((s, d) => s + d.amount, 0)
   const spent = (expenses ?? []).reduce((s, e) => s + e.amount, 0)
-  const bal = col - spent
+  const advertising = (advertisementIncomes ?? []).reduce((s, income) => s + income.amount, 0)
+  const bal = col + advertising - spent
 
   async function remove() {
     if (!confirm(t('deleteConfirm'))) return
@@ -44,10 +46,27 @@ export default function EventDetail() {
         <div className="card text-sm text-stone-600">{pick(event, 'description')}</div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <StatCard label={t('collected')} value={formatINR(col)} tone="green" />
+        <StatCard label={t('advertisementIncome')} value={formatINR(advertising)} tone="green" />
         <StatCard label={t('spent')} value={formatINR(spent)} tone="red" />
         <StatCard label={t('balance')} value={formatINR(bal)} tone={bal >= 0 ? 'saffron' : 'red'} />
+      </div>
+
+      <div>
+        <div className="mb-2 text-sm font-bold text-stone-700">{t('advertisementIncome')} ({advertisementIncomes?.length ?? 0})</div>
+        <div className="space-y-2">
+          {(advertisementIncomes ?? []).map((income) => (
+            <div key={income.id} className="card flex items-center justify-between !p-3">
+              <div>
+                <div className="text-sm font-semibold text-stone-800">{pick(income, 'advertiser')}</div>
+                <div className="text-[11px] text-stone-400">{formatDate(income.date, lang)}</div>
+              </div>
+              <div className="text-sm font-bold tabular-nums text-emerald-600">{formatINR(income.amount)}</div>
+            </div>
+          ))}
+          {advertisementIncomes?.length === 0 && <div className="text-center text-xs text-stone-400">{t('noData')}</div>}
+        </div>
       </div>
 
       <div>

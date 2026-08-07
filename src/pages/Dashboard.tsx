@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
-import { HandCoins, Receipt, TrendingUp, Users, CalendarDays, ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { HandCoins, Receipt, TrendingUp, Users, CalendarDays, ArrowDownRight, ArrowUpRight, Megaphone } from 'lucide-react'
 import type { ComponentType } from 'react'
-import { getAllDonations, getAllExpenses, getDonorCount } from '../db/db'
+import { getAllAdvertisementIncomes, getAllDonations, getAllExpenses, getDonorCount } from '../db/db'
 import { useQuery } from '../hooks/useQuery'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatDate, monthKey } from '../lib/format'
@@ -11,13 +11,15 @@ export default function Dashboard() {
   const { t, lang, pick } = useI18n()
   const donations = useQuery('donations', getAllDonations, [])
   const expenses = useQuery('expenses', getAllExpenses, [])
+  const advertisementIncomes = useQuery('advertisementIncomes', getAllAdvertisementIncomes, [])
   const donorCount = useQuery('donors', getDonorCount, [])
 
-  if (!donations || !expenses) return <div className="py-10 text-center text-stone-400">…</div>
+  if (!donations || !expenses || !advertisementIncomes) return <div className="py-10 text-center text-stone-400">…</div>
 
   const totalDon = donations.reduce((s, d) => s + d.amount, 0)
   const totalExp = expenses.reduce((s, e) => s + e.amount, 0)
-  const net = totalDon - totalExp
+  const totalAdIncome = advertisementIncomes.reduce((s, income) => s + income.amount, 0)
+  const net = totalDon + totalAdIncome - totalExp
 
   const thisMonth = monthKey(new Date().toISOString())
   const monthDon = donations.filter((d) => monthKey(d.date) === thisMonth).reduce((s, d) => s + d.amount, 0)
@@ -74,10 +76,11 @@ export default function Dashboard() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <QuickAction to="/donations/new" icon={HandCoins} label={t('addDonation')} tone="saffron" />
         <QuickAction to="/expenses?add=1" icon={Receipt} label={t('addExpense')} tone="red" />
         <QuickAction to="/events?add=1" icon={CalendarDays} label={t('addEvent')} tone="green" />
+        <QuickAction to="/advertising-income" icon={Megaphone} label={t('advertisementIncome')} tone="green" />
       </div>
 
       {/* Stat grid */}
@@ -86,6 +89,7 @@ export default function Dashboard() {
         <StatCard label={t('donationsCount')} value={String(donations.length)} tone="saffron" icon={<HandCoins size={18} />} />
         <StatCard label={t('donorsCount')} value={String(donorCount ?? 0)} tone="stone" icon={<Users size={18} />} />
         <StatCard label={t('totalExpenses')} value={formatINR(totalExp)} tone="red" icon={<Receipt size={18} />} />
+        <StatCard label={t('advertisementIncome')} value={formatINR(totalAdIncome)} tone="green" icon={<Megaphone size={18} />} />
       </div>
 
       {/* Last 6 months */}

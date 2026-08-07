@@ -61,7 +61,7 @@ export async function renderPagesToPdf(nodes: HTMLElement[], filename: string): 
   const pageH = pdf.internal.pageSize.getHeight()
 
   for (let i = 0; i < nodes.length; i++) {
-    const canvas = await renderCanvas(nodes[i], 1.5)
+    const canvas = await renderCanvas(nodes[i], 2.5)
     let w = pageW
     let h = (canvas.height * w) / canvas.width
     // If a page came out taller than A4, scale it down to fit (centered) so nothing clips.
@@ -71,7 +71,7 @@ export async function renderPagesToPdf(nodes: HTMLElement[], filename: string): 
     }
     const x = (pageW - w) / 2
     if (i > 0) pdf.addPage()
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', x, 0, w, h)
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, 0, w, h)
   }
   pdf.save(withPdfExt(filename))
 }
@@ -85,9 +85,9 @@ export async function elementToPdfFile(el: HTMLElement, filename: string): Promi
 
 /** Render an element to a PNG image File (for sharing / inline WhatsApp preview). */
 export async function elementToPngFile(el: HTMLElement, filename: string): Promise<File> {
-  const canvas = await renderCanvas(el)
-  const blob: Blob = await new Promise((resolve) =>
-    canvas.toBlob((b) => resolve(b as Blob), 'image/png'),
+  const canvas = await renderCanvas(el, 3)
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not create receipt image'))), 'image/png'),
   )
   const name = filename.endsWith('.png') ? filename : `${filename}.png`
   return new File([blob], name, { type: 'image/png' })

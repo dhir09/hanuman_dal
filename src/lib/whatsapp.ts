@@ -21,7 +21,7 @@ export async function shareFile(file: File, text: string, title: string): Promis
     share?: (data: ShareData) => Promise<void>
   }
   const data: ShareData = { files: [file], text, title }
-  if (nav.canShare && nav.canShare(data) && nav.share) {
+  if (nav.share && (!nav.canShare || nav.canShare(data))) {
     try {
       await nav.share(data)
       return true

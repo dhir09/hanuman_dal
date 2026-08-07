@@ -17,6 +17,9 @@ import Donors from './pages/Donors'
 import DonorDetail from './pages/DonorDetail'
 import More from './pages/More'
 import Settings from './pages/Settings'
+import AdvertisementIncome from './pages/AdvertisementIncome'
+import AdvertisementIncomeForm from './pages/AdvertisementIncomeForm'
+import AdvertisementIncomeReceipt from './pages/AdvertisementIncomeReceipt'
 
 function AuthGate() {
   const { user, loading } = useAuth()
@@ -62,6 +65,10 @@ function AuthGate() {
           <Route path="donors/:id" element={<DonorDetail />} />
           <Route path="more" element={<More />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="advertising-income" element={<AdvertisementIncome />} />
+          <Route path="advertising-income/new" element={<AdvertisementIncomeForm />} />
+          <Route path="advertising-income/:id" element={<AdvertisementIncomeReceipt />} />
+          <Route path="advertising-income/:id/edit" element={<AdvertisementIncomeForm />} />
         </Route>
       </Routes>
     </BrowserRouter>

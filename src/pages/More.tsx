@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
-import { CalendarDays, Users, Settings as SettingsIcon, ChevronRight } from 'lucide-react'
+import { CalendarDays, Megaphone, Users, Settings as SettingsIcon, ChevronRight } from 'lucide-react'
 import { useI18n } from '../i18n/I18nContext'
 import type { StringKey } from '../i18n/strings'
 
 const items: Array<{ to: string; icon: typeof Users; key: StringKey }> = [
   { to: '/donors', icon: Users, key: 'nav_donors' },
   { to: '/events', icon: CalendarDays, key: 'nav_events' },
+  { to: '/advertising-income', icon: Megaphone, key: 'nav_advertisementIncome' },
   { to: '/settings', icon: SettingsIcon, key: 'nav_settings' },
 ]
 

@@ -6,13 +6,14 @@ function strip<T extends Record<string, unknown>>(arr: T[]): Omit<T, 'user_id'>[
 }
 
 export async function exportBackup() {
-  const [settings, purposes, donors, donations, events, expenses] = await Promise.all([
+  const [settings, purposes, donors, donations, events, expenses, advertisementIncomes] = await Promise.all([
     supabase.from('settings').select('*'),
     supabase.from('purposes').select('*'),
     supabase.from('donors').select('*'),
     supabase.from('donations').select('*'),
     supabase.from('events').select('*'),
     supabase.from('expenses').select('*'),
+    supabase.from('advertisement_incomes').select('*'),
   ])
   const data = {
     _app: 'hanuman_dal',
@@ -24,6 +25,7 @@ export async function exportBackup() {
     donations: strip(donations.data ?? []),
     events: strip(events.data ?? []),
     expenses: strip(expenses.data ?? []),
+    advertisementIncomes: strip(advertisementIncomes.data ?? []),
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -43,6 +45,7 @@ export async function importBackup(file: File) {
 
   // Clear all tables (order matters for foreign keys)
   await supabase.from('donations').delete().gte('id', 0)
+  await supabase.from('advertisement_incomes').delete().gte('id', 0)
   await supabase.from('expenses').delete().gte('id', 0)
   await supabase.from('events').delete().gte('id', 0)
   await supabase.from('donors').delete().gte('id', 0)
@@ -56,9 +59,10 @@ export async function importBackup(file: File) {
   if (data.events?.length) await supabase.from('events').insert(strip(data.events))
   if (data.donations?.length) await supabase.from('donations').insert(strip(data.donations))
   if (data.expenses?.length) await supabase.from('expenses').insert(strip(data.expenses))
+  if (data.advertisementIncomes?.length) await supabase.from('advertisement_incomes').insert(strip(data.advertisementIncomes))
 
   // Reset identity sequences so future auto-IDs don't collide
   await supabase.rpc('reset_sequences')
 
-  invalidate('settings', 'purposes', 'donors', 'donations', 'events', 'expenses')
+  invalidate('settings', 'purposes', 'donors', 'donations', 'events', 'expenses', 'advertisementIncomes')
 }

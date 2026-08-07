@@ -14,6 +14,7 @@ export const strings = {
   nav_events: { en: 'Events', gu: 'કાર્યક્રમો' },
   nav_donors: { en: 'Donors', gu: 'દાતાઓ' },
   nav_settings: { en: 'Settings', gu: 'સેટિંગ્સ' },
+  nav_advertisementIncome: { en: 'Advertising Income', gu: 'જાહેરાત આવક' },
 
   // Dashboard
   totalDonations: { en: 'Total Donations', gu: 'કુલ દાન' },
@@ -33,6 +34,7 @@ export const strings = {
   addExpense: { en: 'Add Expense', gu: 'ખર્ચ ઉમેરો' },
   addDonor: { en: 'Add Donor', gu: 'દાતા ઉમેરો' },
   addEvent: { en: 'Add Event', gu: 'કાર્યક્રમ ઉમેરો' },
+  addAdvertisementIncome: { en: 'Add Advertising Income', gu: 'જાહેરાત આવક ઉમેરો' },
   save: { en: 'Save', gu: 'સાચવો' },
   cancel: { en: 'Cancel', gu: 'રદ કરો' },
   edit: { en: 'Edit', gu: 'સંપાદિત કરો' },
@@ -60,6 +62,9 @@ export const strings = {
   category: { en: 'Category', gu: 'શ્રેણી' },
   description: { en: 'Description', gu: 'વર્ણન' },
   paidTo: { en: 'Paid To', gu: 'ને ચૂકવેલ' },
+  advertiser: { en: 'Advertiser', gu: 'જાહેરાતકર્તા' },
+  advertisementIncome: { en: 'Advertising Income', gu: 'જાહેરાત આવક' },
+  advertisementReceipt: { en: 'Advertising Income Receipt', gu: 'જાહેરાત આવક રસીદ' },
   name: { en: 'Name', gu: 'નામ' },
   inEnglish: { en: 'in English', gu: 'અંગ્રેજીમાં' },
   inGujarati: { en: 'in Gujarati', gu: 'ગુજરાતીમાં' },

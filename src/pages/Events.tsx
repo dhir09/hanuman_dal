@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '../hooks/useQuery'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Plus, CalendarDays } from 'lucide-react'
-import { addEvent, getAllDonations, getAllEventsDesc, getAllExpenses } from '../db/db'
+import { addEvent, getAllAdvertisementIncomes, getAllDonations, getAllEventsDesc, getAllExpenses } from '../db/db'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatDate, todayISO } from '../lib/format'
 import Modal from '../components/Modal'
@@ -21,6 +21,7 @@ export default function Events() {
   const events = useQuery('events', getAllEventsDesc, [])
   const donations = useQuery('donations', getAllDonations, [])
   const expenses = useQuery('expenses', getAllExpenses, [])
+  const advertisementIncomes = useQuery('advertisementIncomes', getAllAdvertisementIncomes, [])
 
   useEffect(() => {
     if (params.get('add') === '1') {
@@ -63,7 +64,8 @@ export default function Events() {
           {events.map((ev) => {
             const col = (donations ?? []).filter((d) => d.eventId === ev.id).reduce((s, d) => s + d.amount, 0)
             const spent = (expenses ?? []).filter((e) => e.eventId === ev.id).reduce((s, e) => s + e.amount, 0)
-            const bal = col - spent
+            const advertising = (advertisementIncomes ?? []).filter((income) => income.eventId === ev.id).reduce((s, income) => s + income.amount, 0)
+            const bal = col + advertising - spent
             return (
               <Link key={ev.id} to={`/events/${ev.id}`} className="card block !p-4">
                 <div className="flex items-center justify-between">
@@ -83,6 +85,7 @@ export default function Events() {
                 </div>
                 <div className="mt-2 flex gap-3 text-[11px] text-stone-500">
                   <span className="text-emerald-600">↑ {formatINR(col)}</span>
+                  {advertising > 0 && <span className="text-teal-600">📢 {formatINR(advertising)}</span>}
                   <span className="text-red-500">↓ {formatINR(spent)}</span>
                 </div>
               </Link>
