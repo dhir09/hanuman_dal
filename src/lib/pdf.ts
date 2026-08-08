@@ -5,13 +5,79 @@ import { jsPDF } from 'jspdf'
 // as shown on screen (no PDF-font embedding needed). html2canvas-pro also supports
 // modern CSS colour functions like oklch(), which Tailwind v4 emits.
 
+// CSS properties that html2canvas can't resolve from Tailwind v4's @property /
+// CSS-variable chains (gradients, custom-property colours, spacing vars, etc.).
+// Only visual-paint properties — never layout-affecting ones (width, height,
+// display, flex-*, padding, margin, gap) which would collapse the flow layout
+// that html2canvas relies on to position elements.
+const INLINE_PROPS: (keyof CSSStyleDeclaration)[] = [
+  'backgroundColor',
+  'backgroundImage',
+  'color',
+  'borderColor',
+  'borderRadius',
+  'fontSize',
+  'fontWeight',
+  'lineHeight',
+  'letterSpacing',
+  'opacity',
+  'boxShadow',
+  'borderWidth',
+  'borderStyle',
+  'textAlign',
+]
+
 async function renderCanvas(el: HTMLElement, scale = 2): Promise<HTMLCanvasElement> {
+  await document.fonts.ready
+
+  // Wait for every image inside the element to finish loading.
+  const imgs = Array.from(el.querySelectorAll('img'))
+  if (imgs.some((i) => !i.complete)) {
+    await Promise.all(
+      imgs.map((i) =>
+        i.complete
+          ? Promise.resolve()
+          : new Promise<void>((r) => {
+              i.addEventListener('load', () => r(), { once: true })
+              i.addEventListener('error', () => r(), { once: true })
+            }),
+      ),
+    )
+  }
+
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+  // Snapshot resolved computed styles from the live DOM so we can bake them
+  // into the clone that html2canvas creates internally.
+  const origNodes = Array.from(el.querySelectorAll('*')) as HTMLElement[]
+  const computed = origNodes.map((n) => window.getComputedStyle(n))
+  const elComputed = window.getComputedStyle(el)
+
   return html2canvas(el, {
     scale,
     backgroundColor: '#ffffff',
     useCORS: true,
     logging: false,
+    onclone(_doc, clonedEl) {
+      // Inline resolved styles onto the root element and every descendant so
+      // html2canvas doesn't need to resolve Tailwind v4's @property / CSS-var
+      // chains (which it can't).
+      applyComputed(clonedEl, elComputed)
+      const clonedNodes = Array.from(clonedEl.querySelectorAll('*')) as HTMLElement[]
+      for (let i = 0; i < clonedNodes.length; i++) {
+        if (computed[i]) applyComputed(clonedNodes[i], computed[i])
+      }
+    },
   })
+}
+
+function applyComputed(node: HTMLElement, cs: CSSStyleDeclaration) {
+  for (const prop of INLINE_PROPS) {
+    const val = cs[prop]
+    if (val && typeof val === 'string') {
+      ;(node.style as Record<string, string>)[prop as string] = val
+    }
+  }
 }
 
 function canvasToPdf(canvas: HTMLCanvasElement): jsPDF {
