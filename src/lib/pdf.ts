@@ -27,7 +27,7 @@ const INLINE_PROPS: (keyof CSSStyleDeclaration)[] = [
   'textAlign',
 ]
 
-async function renderCanvas(el: HTMLElement, scale = 2): Promise<HTMLCanvasElement> {
+async function renderCanvas(el: HTMLElement, scale = 2, minWidth?: number): Promise<HTMLCanvasElement> {
   await document.fonts.ready
 
   // Wait for every image inside the element to finish loading.
@@ -53,11 +53,15 @@ async function renderCanvas(el: HTMLElement, scale = 2): Promise<HTMLCanvasEleme
   const computed = origNodes.map((n) => window.getComputedStyle(n))
   const elComputed = window.getComputedStyle(el)
 
+  const elWidth = el.scrollWidth || el.offsetWidth
+  const windowWidth = Math.max(elWidth + 40, minWidth ?? 0, window.innerWidth)
+
   return html2canvas(el, {
     scale,
     backgroundColor: '#ffffff',
     useCORS: true,
     logging: false,
+    windowWidth,
     onclone(_doc, clonedEl) {
       // Inline resolved styles onto the root element and every descendant so
       // html2canvas doesn't need to resolve Tailwind v4's @property / CSS-var
@@ -127,7 +131,7 @@ export async function renderPagesToPdf(nodes: HTMLElement[], filename: string): 
   const pageH = pdf.internal.pageSize.getHeight()
 
   for (let i = 0; i < nodes.length; i++) {
-    const canvas = await renderCanvas(nodes[i], 2.5)
+    const canvas = await renderCanvas(nodes[i], 2.5, 800)
     let w = pageW
     let h = (canvas.height * w) / canvas.width
     // If a page came out taller than A4, scale it down to fit (centered) so nothing clips.
