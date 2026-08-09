@@ -1,7 +1,7 @@
 import { useQuery } from '../hooks/useQuery'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
-import { deleteEvent, getAdvertisementIncomesByEvent, getDonationsByEvent, getEvent, getExpensesByEvent } from '../db/db'
+import { deleteEvent, getAdvertisementIncomesByEvent, getDonationsByEvent, getEvent, getExpensesByEvent, getInKindDonationsByEvent } from '../db/db'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatDate } from '../lib/format'
 import StatCard from '../components/StatCard'
@@ -16,6 +16,7 @@ export default function EventDetail() {
   const donations = useQuery('donations', () => getDonationsByEvent(eid), [id])
   const expenses = useQuery('expenses', () => getExpensesByEvent(eid), [id])
   const advertisementIncomes = useQuery('advertisementIncomes', () => getAdvertisementIncomesByEvent(eid), [id])
+  const inKindDonations = useQuery('inKindDonations', () => getInKindDonationsByEvent(eid), [id])
 
   if (!event) return <div className="py-10 text-center text-stone-400">…</div>
 
@@ -98,6 +99,26 @@ export default function EventDetail() {
             </div>
           ))}
           {expenses?.length === 0 && <div className="text-center text-xs text-stone-400">{t('noData')}</div>}
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-2 text-sm font-bold text-stone-700">{t('nav_inKindDonations')} ({inKindDonations?.length ?? 0})</div>
+        <div className="space-y-2">
+          {(inKindDonations ?? []).map((ik) => (
+            <Link key={ik.id} to={`/in-kind/${ik.id}`} className="card flex items-center justify-between !p-3">
+              <div>
+                <div className="text-sm font-semibold text-stone-800">{pick(ik, 'donorName')}</div>
+                <div className="text-[11px] text-stone-400">
+                  {ik.items.map((it) => it.name_gu || it.name_en).join(', ')}
+                </div>
+              </div>
+              <span className={`chip ${ik.status === 'valued' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                {ik.status === 'valued' ? t('valued') : t('pending')}
+              </span>
+            </Link>
+          ))}
+          {inKindDonations?.length === 0 && <div className="text-center text-xs text-stone-400">{t('noData')}</div>}
         </div>
       </div>
     </div>

@@ -128,6 +128,25 @@ export const strings = {
     gu: 'આયાત કરવાથી બધો વર્તમાન ડેટા બદલાઈ જશે. ચાલુ રાખવું?',
   },
 
+  // Item Donations
+  nav_itemDonation: { en: 'Items', gu: 'વસ્તુઓ' },
+  nav_inKindDonations: { en: 'Item Donations', gu: 'વસ્તુ દાન' },
+  addInKindDonation: { en: 'Add Item Donation', gu: 'વસ્તુ દાન ઉમેરો' },
+  inKindDonation: { en: 'Item Donation', gu: 'વસ્તુ દાન' },
+  inKindReceipt: { en: 'Item Donation Receipt', gu: 'વસ્તુ દાન રસીદ' },
+  inKindReceiptProvisional: { en: 'Item Donation Receipt (Provisional)', gu: 'વસ્તુ દાન રસીદ (કામચલાઉ)' },
+  items: { en: 'Items', gu: 'વસ્તુઓ' },
+  item: { en: 'Item', gu: 'વસ્તુ' },
+  quantity: { en: 'Qty', gu: 'જથ્થો' },
+  unit: { en: 'Unit', gu: 'એકમ' },
+  addItem: { en: 'Add Item', gu: 'વસ્તુ ઉમેરો' },
+  pending: { en: 'Pending', gu: 'બાકી' },
+  valued: { en: 'Valued', gu: 'મૂલ્યાંકિત' },
+  addAmounts: { en: 'Add Amounts', gu: 'રકમ ઉમેરો' },
+  saveAmounts: { en: 'Save Amounts', gu: 'રકમ સાચવો' },
+  commonItems: { en: 'Common Items', gu: 'સામાન્ય વસ્તુઓ' },
+  itemsReceivedFrom: { en: 'Items received with thanks from', gu: 'આભાર સહિત વસ્તુઓ પ્રાપ્ત થઈ' },
+
   // Auth
   login: { en: 'Log in', gu: 'લૉગ ઇન' },
   signup: { en: 'Sign up', gu: 'સાઇન અપ' },

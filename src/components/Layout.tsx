@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, HandCoins, FileText, Receipt, MoreHorizontal } from 'lucide-react'
+import { Home, HandCoins, FileText, Receipt, Package, MoreHorizontal } from 'lucide-react'
 import { useI18n } from '../i18n/I18nContext'
 import type { StringKey } from '../i18n/strings'
 import Logo from './Logo'
@@ -9,6 +9,7 @@ const navItems: Array<{ to: string; icon: typeof Home; key: StringKey }> = [
   { to: '/donations', icon: HandCoins, key: 'nav_donations' },
   { to: '/reports', icon: FileText, key: 'nav_reports' },
   { to: '/expenses', icon: Receipt, key: 'nav_expenses' },
+  { to: '/in-kind', icon: Package, key: 'nav_itemDonation' },
   { to: '/more', icon: MoreHorizontal, key: 'nav_more' },
 ]
 
@@ -41,7 +42,7 @@ export default function Layout() {
 
       {/* Bottom navigation */}
       <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-stone-200 bg-white/95 backdrop-blur">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {navItems.map(({ to, icon: Icon, key }) => (
             <NavLink
               key={to}

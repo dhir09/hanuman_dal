@@ -75,7 +75,7 @@ function applyComputed(node: HTMLElement, cs: CSSStyleDeclaration) {
   for (const prop of INLINE_PROPS) {
     const val = cs[prop]
     if (val && typeof val === 'string') {
-      ;(node.style as Record<string, string>)[prop as string] = val
+      ;(node.style as unknown as Record<string, string>)[prop as string] = val
     }
   }
 }
