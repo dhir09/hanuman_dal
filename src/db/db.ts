@@ -90,6 +90,15 @@ export interface AdvertisementIncome {
   createdAt: string
 }
 
+export interface OpeningBalance {
+  id?: number
+  purposeId?: number
+  purpose_en: string
+  purpose_gu: string
+  totalAmount: number
+  pendingAmount: number
+}
+
 export interface InKindItem {
   name_en: string
   name_gu: string
@@ -412,6 +421,35 @@ export async function valueInKindDonation(
     donationId,
     expenseId,
   })
+}
+
+// ── Opening Balances ─────────────────────────────────────────
+
+export async function getAllOpeningBalances(): Promise<OpeningBalance[]> {
+  return unwrap(await supabase.from('opening_balances').select('*').order('id'))
+}
+
+export async function upsertOpeningBalance(ob: Omit<OpeningBalance, 'id'>): Promise<number> {
+  if (ob.purposeId) {
+    const { data } = await supabase
+      .from('opening_balances')
+      .select('id')
+      .eq('purposeId', ob.purposeId)
+      .maybeSingle()
+    if (data) {
+      await supabase.from('opening_balances').update(ob).eq('id', data.id)
+      invalidate('openingBalances')
+      return data.id
+    }
+  }
+  const row = unwrap<{ id: number }>(await supabase.from('opening_balances').insert(ob).select('id').single())
+  invalidate('openingBalances')
+  return row.id
+}
+
+export async function deleteOpeningBalance(id: number): Promise<void> {
+  await supabase.from('opening_balances').delete().eq('id', id)
+  invalidate('openingBalances')
 }
 
 // ── Seed & Receipt ────────────────────────────────────────────

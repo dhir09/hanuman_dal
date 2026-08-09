@@ -6,7 +6,7 @@ function strip<T extends Record<string, unknown>>(arr: T[]): Omit<T, 'user_id'>[
 }
 
 export async function exportBackup() {
-  const [settings, purposes, donors, donations, events, expenses, advertisementIncomes, inKindDonations] = await Promise.all([
+  const [settings, purposes, donors, donations, events, expenses, advertisementIncomes, inKindDonations, openingBalances] = await Promise.all([
     supabase.from('settings').select('*'),
     supabase.from('purposes').select('*'),
     supabase.from('donors').select('*'),
@@ -15,6 +15,7 @@ export async function exportBackup() {
     supabase.from('expenses').select('*'),
     supabase.from('advertisement_incomes').select('*'),
     supabase.from('in_kind_donations').select('*'),
+    supabase.from('opening_balances').select('*'),
   ])
   const data = {
     _app: 'hanuman_dal',
@@ -28,6 +29,7 @@ export async function exportBackup() {
     expenses: strip(expenses.data ?? []),
     advertisementIncomes: strip(advertisementIncomes.data ?? []),
     inKindDonations: strip(inKindDonations.data ?? []),
+    openingBalances: strip(openingBalances.data ?? []),
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -46,6 +48,7 @@ export async function importBackup(file: File) {
   }
 
   // Clear all tables (order matters for foreign keys)
+  await supabase.from('opening_balances').delete().gte('id', 0)
   await supabase.from('in_kind_donations').delete().gte('id', 0)
   await supabase.from('donations').delete().gte('id', 0)
   await supabase.from('advertisement_incomes').delete().gte('id', 0)
@@ -64,9 +67,10 @@ export async function importBackup(file: File) {
   if (data.expenses?.length) await supabase.from('expenses').insert(strip(data.expenses))
   if (data.advertisementIncomes?.length) await supabase.from('advertisement_incomes').insert(strip(data.advertisementIncomes))
   if (data.inKindDonations?.length) await supabase.from('in_kind_donations').insert(strip(data.inKindDonations))
+  if (data.openingBalances?.length) await supabase.from('opening_balances').insert(strip(data.openingBalances))
 
   // Reset identity sequences so future auto-IDs don't collide
   await supabase.rpc('reset_sequences')
 
-  invalidate('settings', 'purposes', 'donors', 'donations', 'events', 'expenses', 'advertisementIncomes', 'inKindDonations')
+  invalidate('settings', 'purposes', 'donors', 'donations', 'events', 'expenses', 'advertisementIncomes', 'inKindDonations', 'openingBalances')
 }

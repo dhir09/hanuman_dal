@@ -147,6 +147,18 @@ export const strings = {
   commonItems: { en: 'Common Items', gu: 'સામાન્ય વસ્તુઓ' },
   itemsReceivedFrom: { en: 'Items received with thanks from', gu: 'આભાર સહિત વસ્તુઓ પ્રાપ્ત થઈ' },
 
+  // Opening Balance
+  openingBalance: { en: 'Past Records', gu: 'ભૂતકાળના રેકોર્ડ' },
+  openingBalanceDesc: { en: 'Carried forward from previous records', gu: 'અગાઉના રેકોર્ડમાંથી આગળ વધાર્યું' },
+  totalPast: { en: 'Total', gu: 'કુલ' },
+  pendingPast: { en: 'Pending', gu: 'બાકી' },
+  collectedPast: { en: 'Collected', gu: 'એકત્ર' },
+  editOpeningBalance: { en: 'Edit Past Records', gu: 'ભૂતકાળના રેકોર્ડ સંપાદિત કરો' },
+  addOpeningBalance: { en: 'Add Past Record', gu: 'ભૂતકાળનો રેકોર્ડ ઉમેરો' },
+  selectPurpose: { en: 'Select Purpose', gu: 'હેતુ પસંદ કરો' },
+  totalAmount: { en: 'Total Amount', gu: 'કુલ રકમ' },
+  pendingAmount: { en: 'Pending Amount', gu: 'બાકી રકમ' },
+
   // Auth
   login: { en: 'Log in', gu: 'લૉગ ઇન' },
   signup: { en: 'Sign up', gu: 'સાઇન અપ' },

@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
-import { HandCoins, Receipt, TrendingUp, Users, CalendarDays, ArrowDownRight, ArrowUpRight, Megaphone } from 'lucide-react'
-import type { ComponentType } from 'react'
-import { getAllAdvertisementIncomes, getAllDonations, getAllExpenses, getDonorCount } from '../db/db'
+import { HandCoins, Receipt, TrendingUp, Users, CalendarDays, ArrowDownRight, ArrowUpRight, Megaphone, History, Plus, Pencil, Trash2 } from 'lucide-react'
+import { useState, type ComponentType } from 'react'
+import { getAllAdvertisementIncomes, getAllDonations, getAllExpenses, getDonorCount, getAllOpeningBalances, getActivePurposes, upsertOpeningBalance, deleteOpeningBalance } from '../db/db'
+import type { OpeningBalance, Purpose } from '../db/db'
 import { useQuery } from '../hooks/useQuery'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatDate, monthKey } from '../lib/format'
 import StatCard from '../components/StatCard'
+import Modal from '../components/Modal'
 
 export default function Dashboard() {
   const { t, lang, pick } = useI18n()
@@ -13,6 +15,15 @@ export default function Dashboard() {
   const expenses = useQuery('expenses', getAllExpenses, [])
   const advertisementIncomes = useQuery('advertisementIncomes', getAllAdvertisementIncomes, [])
   const donorCount = useQuery('donors', getDonorCount, [])
+  const openingBalances = useQuery('openingBalances', getAllOpeningBalances, [])
+  const purposes = useQuery('purposes', getActivePurposes, [])
+
+  const [showOBModal, setShowOBModal] = useState(false)
+  const [obEdit, setObEdit] = useState<OpeningBalance | null>(null)
+  const [obPurposeId, setObPurposeId] = useState('')
+  const [obTotal, setObTotal] = useState('')
+  const [obPending, setObPending] = useState('')
+  const [obSaving, setObSaving] = useState(false)
 
   if (!donations || !expenses || !advertisementIncomes) return <div className="py-10 text-center text-stone-400">…</div>
 
@@ -48,6 +59,45 @@ export default function Dashboard() {
   const maxMonth = Math.max(1, ...monthTotals.map((x) => Math.max(x.don, x.exp)))
 
   const recent = [...donations].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5)
+
+  const obTotalAmt = (openingBalances ?? []).reduce((s, ob) => s + ob.totalAmount, 0)
+  const obPendingAmt = (openingBalances ?? []).reduce((s, ob) => s + ob.pendingAmount, 0)
+  const obCollected = obTotalAmt - obPendingAmt
+
+  function openAddOB() {
+    setObEdit(null)
+    setObPurposeId('')
+    setObTotal('')
+    setObPending('')
+    setShowOBModal(true)
+  }
+
+  function openEditOB(ob: OpeningBalance) {
+    setObEdit(ob)
+    setObPurposeId(String(ob.purposeId ?? ''))
+    setObTotal(String(ob.totalAmount))
+    setObPending(String(ob.pendingAmount))
+    setShowOBModal(true)
+  }
+
+  async function saveOB() {
+    const pid = obPurposeId ? Number(obPurposeId) : undefined
+    const p = (purposes ?? []).find((pp: Purpose) => pp.id === pid)
+    setObSaving(true)
+    await upsertOpeningBalance({
+      purposeId: pid,
+      purpose_en: p?.name_en ?? '',
+      purpose_gu: p?.name_gu ?? '',
+      totalAmount: Number(obTotal) || 0,
+      pendingAmount: Number(obPending) || 0,
+    })
+    setObSaving(false)
+    setShowOBModal(false)
+  }
+
+  async function handleDeleteOB(id: number) {
+    if (confirm(t('deleteConfirm'))) await deleteOpeningBalance(id)
+  }
 
   return (
     <div className="space-y-4">
@@ -91,6 +141,125 @@ export default function Dashboard() {
         <StatCard label={t('totalExpenses')} value={formatINR(totalExp)} tone="red" icon={<Receipt size={18} />} />
         <StatCard label={t('advertisementIncome')} value={formatINR(totalAdIncome)} tone="green" icon={<Megaphone size={18} />} />
       </div>
+
+      {/* Opening Balance / Past Records */}
+      <div className="card">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <History size={16} className="text-saffron-600" />
+            <span className="text-sm font-bold text-stone-700">{t('openingBalance')}</span>
+          </div>
+          <button onClick={openAddOB} className="flex items-center gap-1 text-xs font-semibold text-saffron-600">
+            <Plus size={14} /> {t('add')}
+          </button>
+        </div>
+
+        {(openingBalances ?? []).length === 0 ? (
+          <div className="py-4 text-center text-xs text-stone-400">{t('openingBalanceDesc')}</div>
+        ) : (
+          <>
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-saffron-50 px-3 py-2 text-center">
+                <div className="text-[10px] font-medium uppercase text-saffron-600">{t('totalPast')}</div>
+                <div className="text-sm font-bold tabular-nums text-saffron-700">{formatINR(obTotalAmt)}</div>
+              </div>
+              <div className="rounded-xl bg-emerald-50 px-3 py-2 text-center">
+                <div className="text-[10px] font-medium uppercase text-emerald-600">{t('collectedPast')}</div>
+                <div className="text-sm font-bold tabular-nums text-emerald-700">{formatINR(obCollected)}</div>
+              </div>
+              <div className="rounded-xl bg-red-50 px-3 py-2 text-center">
+                <div className="text-[10px] font-medium uppercase text-red-600">{t('pendingPast')}</div>
+                <div className="text-sm font-bold tabular-nums text-red-600">{formatINR(obPendingAmt)}</div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-stone-100">
+              {(openingBalances ?? []).map((ob) => (
+                <div key={ob.id} className="flex items-center justify-between py-2">
+                  <div>
+                    <div className="text-sm font-semibold text-stone-700">
+                      {lang === 'gu' ? ob.purpose_gu : ob.purpose_en || '—'}
+                    </div>
+                    <div className="text-xs text-stone-400">
+                      {t('collectedPast')}: {formatINR(ob.totalAmount - ob.pendingAmount)}
+                      {ob.pendingAmount > 0 && (
+                        <span className="ml-2 text-red-500">
+                          · {t('pendingPast')}: {formatINR(ob.pendingAmount)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold tabular-nums text-stone-700">{formatINR(ob.totalAmount)}</span>
+                    <button onClick={() => openEditOB(ob)} className="rounded-full p-1 text-stone-400 hover:bg-stone-100">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => handleDeleteOB(ob.id!)} className="rounded-full p-1 text-red-400 hover:bg-red-50">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Add/Edit Opening Balance Modal */}
+      <Modal
+        open={showOBModal}
+        title={obEdit ? t('editOpeningBalance') : t('addOpeningBalance')}
+        onClose={() => setShowOBModal(false)}
+        footer={
+          <>
+            <button className="btn-ghost flex-1" onClick={() => setShowOBModal(false)}>{t('cancel')}</button>
+            <button className="btn-primary flex-1" onClick={saveOB} disabled={obSaving || !obPurposeId}>
+              {obSaving ? '…' : t('save')}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="label">{t('purpose')}</label>
+            <select
+              className="field"
+              value={obPurposeId}
+              onChange={(e) => setObPurposeId(e.target.value)}
+              disabled={!!obEdit}
+            >
+              <option value="">{t('selectPurpose')}</option>
+              {(purposes ?? []).map((p: Purpose) => (
+                <option key={p.id} value={p.id}>
+                  {lang === 'gu' ? p.name_gu : p.name_en}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">{t('totalAmount')}</label>
+            <input
+              type="number"
+              className="field"
+              value={obTotal}
+              onChange={(e) => setObTotal(e.target.value)}
+              placeholder="0"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="label">{t('pendingAmount')}</label>
+            <input
+              type="number"
+              className="field"
+              value={obPending}
+              onChange={(e) => setObPending(e.target.value)}
+              placeholder="0"
+              min="0"
+            />
+          </div>
+        </div>
+      </Modal>
 
       {/* Last 6 months */}
       <div className="card">
