@@ -147,6 +147,20 @@ export const strings = {
   commonItems: { en: 'Common Items', gu: 'સામાન્ય વસ્તુઓ' },
   itemsReceivedFrom: { en: 'Items received with thanks from', gu: 'આભાર સહિત વસ્તુઓ પ્રાપ્ત થઈ' },
 
+  // Import Past Records
+  importPastRecords: { en: 'Import Past Records', gu: 'ભૂતકાળના રેકોર્ડ આયાત કરો' },
+  importPastRecordsDesc: { en: 'Upload an Excel file with donor name, amount, and payment mode to bulk-import past donations.', gu: 'દાતાનું નામ, રકમ અને ચુકવણી રીત સાથેની Excel ફાઇલ અપલોડ કરીને ભૂતકાળના દાન આયાત કરો.' },
+  selectExcelFile: { en: 'Select Excel File', gu: 'Excel ફાઇલ પસંદ કરો' },
+  tapToChange: { en: 'Tap to change file', gu: 'ફાઇલ બદલવા ટેપ કરો' },
+  selected: { en: 'selected', gu: 'પસંદ કરેલ' },
+  selectAll: { en: 'Select All', gu: 'બધા પસંદ કરો' },
+  deselectAll: { en: 'Deselect All', gu: 'બધા અનપસંદ કરો' },
+  importRecords: { en: 'Import', gu: 'આયાત કરો' },
+  recordsImported: { en: 'records imported', gu: 'રેકોર્ડ આયાત થયા' },
+  recordsFailed: { en: 'records failed', gu: 'રેકોર્ડ નિષ્ફળ' },
+  importMore: { en: 'Import More', gu: 'વધુ આયાત કરો' },
+  viewDonations: { en: 'View Donations', gu: 'દાન જુઓ' },
+
   // Opening Balance
   openingBalance: { en: 'Past Records', gu: 'ભૂતકાળના રેકોર્ડ' },
   openingBalanceDesc: { en: 'Carried forward from previous records', gu: 'અગાઉના રેકોર્ડમાંથી આગળ વધાર્યું' },

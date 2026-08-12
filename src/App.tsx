@@ -23,6 +23,7 @@ import AdvertisementIncomeReceipt from './pages/AdvertisementIncomeReceipt'
 import InKindDonations from './pages/InKindDonations'
 import InKindDonationForm from './pages/InKindDonationForm'
 import InKindDonationReceipt from './pages/InKindDonationReceipt'
+import ImportPastRecords from './pages/ImportPastRecords'
 
 function AuthGate() {
   const { user, loading } = useAuth()
@@ -76,6 +77,7 @@ function AuthGate() {
           <Route path="in-kind/new" element={<InKindDonationForm />} />
           <Route path="in-kind/:id" element={<InKindDonationReceipt />} />
           <Route path="in-kind/:id/edit" element={<InKindDonationForm />} />
+          <Route path="import-past-records" element={<ImportPastRecords />} />
         </Route>
       </Routes>
     </BrowserRouter>

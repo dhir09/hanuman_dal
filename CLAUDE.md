@@ -38,7 +38,7 @@ Each entity module follows: `/path` (list), `/path/new` (form), `/path/:id` (rec
 
 ### Receipt / PDF capture
 
-`src/lib/pdf.ts` uses `html2canvas-pro` + `jsPDF`. The `renderCanvas` function snapshots computed styles via `onclone` to work around html2canvas not resolving Tailwind v4's `@property` / CSS-variable chains. Sharing uses the Web Share API for mobile, falling back to PDF download + WhatsApp text link on desktop (`src/lib/whatsapp.ts`).
+`src/lib/pdf.ts` uses `html2canvas-pro` + `jsPDF`. `renderCanvas` never captures the on-screen node: it clones the element into an off-screen holder laid out at a fixed width (`layoutWidth`, 420px for receipts) so the output is identical on phone and desktop — capturing the live node let the phone's viewport/scroll state shift the captured region and blow the receipt's header band up across a whole page. It also snapshots computed styles via `onclone` to work around html2canvas not resolving Tailwind v4's `@property` / CSS-variable chains. Receipts are fitted to a single A4 page; only reports (`renderPagesToPdf`) are multi-page. Sharing uses the Web Share API for mobile, falling back to PDF download + WhatsApp text link on desktop (`src/lib/whatsapp.ts`).
 
 ### Styling
 
