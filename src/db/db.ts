@@ -127,6 +127,61 @@ export interface InKindDonation {
   createdAt: string
 }
 
+// A single height×width variant of a decoration item, with its own piece count.
+// e.g. a mandap cloth needed in 2 pcs of 10×8 ft and 3 pcs of 5×4 ft.
+export interface DecorationSize {
+  height: number
+  width: number
+  unit: string // ft, m, in…
+  pieces: number
+}
+
+// One line in a decoration plan — a specific item under a (dynamic) category.
+// Categories (Mandap / Banner / Lights…) are free-text so new ones need no code.
+export interface DecorationItem {
+  category_en: string
+  category_gu: string
+  name_en: string
+  name_gu: string
+  // Simple piece count, used only when the item has no per-size breakdown.
+  pieces: number
+  // Optional height×width variants; when present each row carries its own pieces
+  // and the item's total pieces is the sum of these instead of `pieces`.
+  sizes: DecorationSize[]
+  // Optional cost per piece — purely a planning aid, not tied to the expense ledger.
+  rate?: number
+  note_en: string
+  note_gu: string
+}
+
+export interface DecorationPlan {
+  id?: number
+  eventId?: number
+  title_en: string
+  title_gu: string
+  date: string
+  items: DecorationItem[]
+  note_en: string
+  note_gu: string
+  createdAt: string
+}
+
+/** Total pieces of an item: sum of its size variants, or its plain piece count. */
+export function decorationItemPieces(item: DecorationItem): number {
+  if (item.sizes && item.sizes.length) return item.sizes.reduce((s, z) => s + (z.pieces || 0), 0)
+  return item.pieces || 0
+}
+
+/** Estimated cost of one item = rate × total pieces (0 when no rate is set). */
+export function decorationItemCost(item: DecorationItem): number {
+  return (item.rate ?? 0) * decorationItemPieces(item)
+}
+
+/** Estimated total cost of a whole plan. */
+export function decorationPlanTotal(plan: Pick<DecorationPlan, 'items'>): number {
+  return plan.items.reduce((s, it) => s + decorationItemCost(it), 0)
+}
+
 // ── Helpers ────────────────────────────────────────────────────
 
 function unwrap<T>(result: { data: T | null; error: unknown }): NonNullable<T> {
@@ -421,6 +476,37 @@ export async function valueInKindDonation(
     donationId,
     expenseId,
   })
+}
+
+// ── Decoration Plans ──────────────────────────────────────────
+
+export async function getAllDecorationPlansDesc(): Promise<DecorationPlan[]> {
+  return unwrap(await supabase.from('decoration_plans').select('*').order('date', { ascending: false }))
+}
+
+export async function getDecorationPlan(id: number): Promise<DecorationPlan | undefined> {
+  const { data } = await supabase.from('decoration_plans').select('*').eq('id', id).maybeSingle()
+  return data ?? undefined
+}
+
+export async function getDecorationPlansByEvent(eventId: number): Promise<DecorationPlan[]> {
+  return unwrap(await supabase.from('decoration_plans').select('*').eq('eventId', eventId))
+}
+
+export async function addDecorationPlan(p: Omit<DecorationPlan, 'id'>): Promise<number> {
+  const row = unwrap<{ id: number }>(await supabase.from('decoration_plans').insert(p).select('id').single())
+  invalidate('decorationPlans')
+  return row.id
+}
+
+export async function updateDecorationPlan(id: number, p: Partial<DecorationPlan>): Promise<void> {
+  await supabase.from('decoration_plans').update(p).eq('id', id)
+  invalidate('decorationPlans')
+}
+
+export async function deleteDecorationPlan(id: number): Promise<void> {
+  await supabase.from('decoration_plans').delete().eq('id', id)
+  invalidate('decorationPlans')
 }
 
 // ── Opening Balances ─────────────────────────────────────────

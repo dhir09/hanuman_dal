@@ -1,15 +1,15 @@
 -- One-time Janmashtami data import for Hanuman Dal.
 --
 -- 1. In Supabase Dashboard > Authentication > Users, copy your user's UUID.
--- 2. On the `target_user_id` line below, replace ONLY the all-zero UUID
---    with your user UUID.
+-- 2. Replace PASTE-YOUR-USER-UUID below.
 -- 3. Run this file in Supabase Dashboard > SQL Editor.
 --
 -- This is idempotent: re-running it will not add duplicate imported donations.
 
 do $$
 declare
-  target_user_id uuid := '00000000-0000-0000-0000-000000000000';
+  target_user_id_text text := '750e2dc3-9bae-4795-9493-7acedc44e610';
+  target_user_id uuid;
   import_date date := '2026-08-07';
   janmashtami_event_id bigint;
   festival_purpose_id bigint;
@@ -18,15 +18,19 @@ declare
   item record;
   donor_record_id bigint;
 begin
+  if target_user_id_text = '750e2dc3-9bae-4795-9493-7acedc44e610' then
+    raise exception 'Replace PASTE-YOUR-USER-UUID with the UUID from Authentication > Users';
+  end if;
+
+  target_user_id := target_user_id_text::uuid;
+
   select id into festival_purpose_id
   from purposes
   where user_id = target_user_id and name_en = 'Festival / Utsav'
   limit 1;
 
   if festival_purpose_id is null then
-    insert into purposes (name_en, name_gu, active, user_id)
-    values ('Festival / Utsav', 'ઉત્સવ', 1, target_user_id)
-    returning id into festival_purpose_id;
+    raise exception 'Festival / Utsav purpose was not found for this user';
   end if;
 
   select id into janmashtami_event_id

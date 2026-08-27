@@ -1,7 +1,7 @@
 import { useQuery } from '../hooks/useQuery'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
-import { deleteEvent, getAdvertisementIncomesByEvent, getDonationsByEvent, getEvent, getExpensesByEvent, getInKindDonationsByEvent } from '../db/db'
+import { deleteEvent, getAdvertisementIncomesByEvent, getDecorationPlansByEvent, getDonationsByEvent, getEvent, getExpensesByEvent, getInKindDonationsByEvent, decorationItemPieces } from '../db/db'
 import { useI18n } from '../i18n/I18nContext'
 import { formatINR, formatDate } from '../lib/format'
 import StatCard from '../components/StatCard'
@@ -17,6 +17,7 @@ export default function EventDetail() {
   const expenses = useQuery('expenses', () => getExpensesByEvent(eid), [id])
   const advertisementIncomes = useQuery('advertisementIncomes', () => getAdvertisementIncomesByEvent(eid), [id])
   const inKindDonations = useQuery('inKindDonations', () => getInKindDonationsByEvent(eid), [id])
+  const decorationPlans = useQuery('decorationPlans', () => getDecorationPlansByEvent(eid), [id])
 
   if (!event) return <div className="py-10 text-center text-stone-400">…</div>
 
@@ -119,6 +120,24 @@ export default function EventDetail() {
             </Link>
           ))}
           {inKindDonations?.length === 0 && <div className="text-center text-xs text-stone-400">{t('noData')}</div>}
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-2 text-sm font-bold text-stone-700">{t('nav_decorations')} ({decorationPlans?.length ?? 0})</div>
+        <div className="space-y-2">
+          {(decorationPlans ?? []).map((p) => (
+            <Link key={p.id} to={`/decorations/${p.id}`} className="card flex items-center justify-between !p-3">
+              <div>
+                <div className="text-sm font-semibold text-stone-800">{pick(p, 'title') || t('decorationPlan')}</div>
+                <div className="text-[11px] text-stone-400">
+                  {p.items.length} {t('items')} · {p.items.reduce((s, it) => s + decorationItemPieces(it), 0)} {t('pieces')}
+                </div>
+              </div>
+              <span className="chip bg-saffron-100 text-saffron-700">{t('decoration')}</span>
+            </Link>
+          ))}
+          {decorationPlans?.length === 0 && <div className="text-center text-xs text-stone-400">{t('noData')}</div>}
         </div>
       </div>
     </div>

@@ -46,6 +46,39 @@ async function waitForImages(el: HTMLElement): Promise<void> {
   )
 }
 
+/**
+ * Replace every `<img src="/…">` inside `root` with an inline base64 data URI.
+ *
+ * html2canvas re-fetches image URLs itself while it captures, and on a cold cache
+ * (the very first share after opening the app) that fetch loses the race — the
+ * receipt's logo and signature come out missing, which collapses the header band.
+ * Refreshing "fixes" it only because the browser has since cached the files.
+ * Baking the bytes straight into the clone removes the network step entirely, so
+ * the first capture looks identical to every later one.
+ */
+async function inlineImages(root: HTMLElement): Promise<void> {
+  const imgs = Array.from(root.querySelectorAll('img'))
+  await Promise.all(
+    imgs.map(async (img) => {
+      const src = img.getAttribute('src')
+      if (!src || src.startsWith('data:')) return
+      try {
+        const res = await fetch(src)
+        const blob = await res.blob()
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = () => reject(new Error(`Could not read ${src}`))
+          reader.readAsDataURL(blob)
+        })
+        img.setAttribute('src', dataUrl)
+      } catch {
+        // Leave the original URL in place — a missing image is better than a throw.
+      }
+    }),
+  )
+}
+
 type CaptureOptions = {
   scale?: number
   /** Lay the copy out at exactly this width. Omit for nodes that already own a fixed width. */
@@ -80,6 +113,9 @@ async function renderCanvas(el: HTMLElement, opts: CaptureOptions = {}): Promise
   document.body.appendChild(holder)
 
   try {
+    // Bake image bytes into the clone first, then wait for those data URIs to
+    // decode, so html2canvas never has to fetch anything mid-capture.
+    await inlineImages(copy)
     await waitForImages(copy)
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
 
