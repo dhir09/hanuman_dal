@@ -109,6 +109,34 @@ export const strings = {
   spent: { en: 'Spent', gu: 'ખર્ચાયું' },
   balance: { en: 'Balance', gu: 'બાકી' },
 
+  // Profit & Loss / Income & Expenditure statement
+  pnlStatement: { en: 'P&L Statement', gu: 'નફા-નુકસાન પત્રક' },
+  incomeExpenditureStatement: { en: 'Income & Expenditure Statement', gu: 'આવક અને જાવક પત્રક' },
+  generatePnl: { en: 'Generate P&L Statement', gu: 'નફા-નુકસાન પત્રક બનાવો' },
+  particulars: { en: 'Particulars', gu: 'વિગત' },
+  income: { en: 'Income', gu: 'આવક' },
+  expenditure: { en: 'Expenditure', gu: 'જાવક' },
+  donationsReceived: { en: 'Donations Received', gu: 'પ્રાપ્ત દાન' },
+  totalIncome: { en: 'Total Income', gu: 'કુલ આવક' },
+  totalExpenditure: { en: 'Total Expenditure', gu: 'કુલ જાવક' },
+  surplusDeficit: { en: 'Surplus / (Deficit)', gu: 'સરપ્લસ / (ખાધ)' },
+  surplus: { en: 'Surplus', gu: 'સરપ્લસ' },
+  deficit: { en: 'Deficit', gu: 'ખાધ' },
+  forTheEvent: { en: 'For the event', gu: 'કાર્યક્રમ માટે' },
+  placeAndDate: { en: 'Place & Date', gu: 'સ્થળ અને તારીખ' },
+  inWords: { en: 'In words', gu: 'શબ્દોમાં' },
+  downloadEnglish: { en: 'PDF · English', gu: 'PDF · અંગ્રેજી' },
+  downloadGujarati: { en: 'PDF · ગુજરાતી', gu: 'PDF · ગુજરાતી' },
+  preview: { en: 'Preview', gu: 'પૂર્વાવલોકન' },
+  pnlNote: {
+    en: 'This Income & Expenditure Statement is prepared on a cash basis for the above event and is intended for income-tax return (ITR) purposes.',
+    gu: 'આ આવક અને જાવક પત્રક ઉપરોક્ત કાર્યક્રમ માટે રોકડ આધારે તૈયાર કરવામાં આવ્યું છે અને આવકવેરા રિટર્ન (ITR) હેતુ માટે છે.',
+  },
+  computerGenerated: {
+    en: 'This is a computer-generated statement.',
+    gu: 'આ કમ્પ્યુટર દ્વારા બનાવેલ પત્રક છે.',
+  },
+
   // Settings
   language: { en: 'Language', gu: 'ભાષા' },
   orgDetails: { en: 'Organisation Details', gu: 'સંસ્થાની વિગતો' },

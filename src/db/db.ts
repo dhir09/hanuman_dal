@@ -345,6 +345,13 @@ export async function addExpense(e: Omit<Expense, 'id'>): Promise<number> {
   return row.id
 }
 
+export async function addExpensesBulk(rows: Omit<Expense, 'id'>[]): Promise<number> {
+  if (rows.length === 0) return 0
+  const inserted = unwrap<{ id: number }[]>(await supabase.from('expenses').insert(rows).select('id'))
+  invalidate('expenses')
+  return inserted.length
+}
+
 export async function updateExpense(id: number, e: Partial<Expense>): Promise<void> {
   await supabase.from('expenses').update(e).eq('id', id)
   invalidate('expenses')

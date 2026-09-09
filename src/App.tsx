@@ -13,6 +13,7 @@ import Reports from './pages/Reports'
 import Expenses from './pages/Expenses'
 import Events from './pages/Events'
 import EventDetail from './pages/EventDetail'
+import EventPnl from './pages/EventPnl'
 import Donors from './pages/Donors'
 import DonorDetail from './pages/DonorDetail'
 import More from './pages/More'
@@ -68,6 +69,7 @@ function AuthGate() {
           <Route path="expenses" element={<Expenses />} />
           <Route path="events" element={<Events />} />
           <Route path="events/:id" element={<EventDetail />} />
+          <Route path="events/:id/pnl" element={<EventPnl />} />
           <Route path="donors" element={<Donors />} />
           <Route path="donors/:id" element={<DonorDetail />} />
           <Route path="more" element={<More />} />
