@@ -1,12 +1,10 @@
-import { useState } from 'react'
 import { useQuery } from '../hooks/useQuery'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, FileText, PlusSquare, Trash2 } from 'lucide-react'
-import { addExpensesBulk, deleteEvent, getAdvertisementIncomesByEvent, getDecorationPlansByEvent, getDonationsByEvent, getEvent, getExpensesByEvent, getInKindDonationsByEvent, decorationItemPieces } from '../db/db'
+import { ArrowLeft, FileText, Trash2 } from 'lucide-react'
+import { deleteEvent, getAdvertisementIncomesByEvent, getDecorationPlansByEvent, getDonationsByEvent, getEvent, getExpensesByEvent, getInKindDonationsByEvent, decorationItemPieces } from '../db/db'
 import { useI18n } from '../i18n/I18nContext'
-import { formatINR, formatDate, todayISO } from '../lib/format'
+import { formatINR, formatDate } from '../lib/format'
 import StatCard from '../components/StatCard'
-import { FESTIVAL_EXPENSES, FESTIVAL_EXPENSES_COUNT, FESTIVAL_EXPENSES_TOTAL } from '../data/festivalExpenses'
 
 export default function EventDetail() {
   const { t, lang, pick } = useI18n()
@@ -20,7 +18,6 @@ export default function EventDetail() {
   const advertisementIncomes = useQuery('advertisementIncomes', () => getAdvertisementIncomesByEvent(eid), [id])
   const inKindDonations = useQuery('inKindDonations', () => getInKindDonationsByEvent(eid), [id])
   const decorationPlans = useQuery('decorationPlans', () => getDecorationPlansByEvent(eid), [id])
-  const [importing, setImporting] = useState(false)
 
   if (!event) return <div className="py-10 text-center text-stone-400">…</div>
 
@@ -33,38 +30,6 @@ export default function EventDetail() {
     if (!confirm(t('deleteConfirm'))) return
     await deleteEvent(eid)
     nav('/events')
-  }
-
-  async function importFestivalExpenses() {
-    if (importing) return
-    const msg = `Add ${FESTIVAL_EXPENSES_COUNT} festival expenses (${formatINR(FESTIVAL_EXPENSES_TOTAL)}) to "${pick(event!, 'name')}"? All will be recorded as UPI. This cannot be undone in bulk.`
-    if (!confirm(msg)) return
-    setImporting(true)
-    try {
-      const now = new Date().toISOString()
-      const date = event!.date || todayISO()
-      const rows = FESTIVAL_EXPENSES.flatMap((cat) =>
-        cat.items.map((it) => ({
-          date,
-          eventId: eid,
-          category_en: cat.category_en,
-          category_gu: cat.category_gu,
-          description_en: it.description_en,
-          description_gu: it.description_gu,
-          paidTo_en: '',
-          paidTo_gu: '',
-          amount: it.amount,
-          paymentMode: 'upi' as const,
-          createdAt: now,
-        })),
-      )
-      const n = await addExpensesBulk(rows)
-      alert(`${n} expenses added.`)
-    } catch (err) {
-      alert(`Import failed: ${err instanceof Error ? err.message : String(err)}`)
-    } finally {
-      setImporting(false)
-    }
   }
 
   return (
@@ -93,10 +58,6 @@ export default function EventDetail() {
       <Link to={`/events/${eid}/pnl`} className="btn-primary w-full">
         <FileText size={16} /> {t('generatePnl')}
       </Link>
-
-      <button onClick={importFestivalExpenses} disabled={importing} className="btn-ghost w-full">
-        <PlusSquare size={16} /> {importing ? '…' : `Import festival expenses (${formatINR(FESTIVAL_EXPENSES_TOTAL)})`}
-      </button>
 
       <div>
         <div className="mb-2 text-sm font-bold text-stone-700">{t('advertisementIncome')} ({advertisementIncomes?.length ?? 0})</div>
