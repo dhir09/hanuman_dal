@@ -120,7 +120,7 @@ export const strings = {
   totalIncome: { en: 'Total Income', gu: 'કુલ આવક' },
   totalExpenditure: { en: 'Total Expenditure', gu: 'કુલ જાવક' },
   surplusDeficit: { en: 'Surplus / (Deficit)', gu: 'સરપ્લસ / (ખાધ)' },
-  surplus: { en: 'Surplus', gu: 'સરપ્લસ' },
+  surplus: { en: 'Surplus', gu: 'કુલ ટોટલ બચત' },
   deficit: { en: 'Deficit', gu: 'ખાધ' },
   forTheEvent: { en: 'For the event', gu: 'કાર્યક્રમ માટે' },
   placeAndDate: { en: 'Place & Date', gu: 'સ્થળ અને તારીખ' },
