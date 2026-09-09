@@ -183,13 +183,13 @@ function PnlDoc({ docLang, event, settings, donations, expenses, advertisementIn
     )
     const adTotal = advertisementIncomes.reduce((s, a) => s + a.amount, 0)
     if (adTotal > 0) lines.push({ label: dt('advertisementIncome'), amount: adTotal })
-    return lines
+    return lines.sort((a, b) => b.amount - a.amount)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [donations, advertisementIncomes, docLang])
 
   // Expenditure: expenses grouped by category.
   const expenseLines = useMemo<Line[]>(
-    () => groupBy(expenses, (e) => pk(docLang, e, 'category') || pk(docLang, e, 'description') || '—', (e) => e.amount),
+    () => groupBy(expenses, (e) => pk(docLang, e, 'category') || pk(docLang, e, 'description') || '—', (e) => e.amount).sort((a, b) => b.amount - a.amount),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [expenses, docLang],
   )
